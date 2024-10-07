@@ -24,7 +24,8 @@
       "favicon": "./assets/CrushEka-App-Icon-Small.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-router"
     ]
   }
 }
