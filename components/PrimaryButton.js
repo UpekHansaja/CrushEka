@@ -13,9 +13,9 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 40,
     width: "100%",
-    paddingHorizontal: 80,
+    paddingHorizontal: 40,
     paddingVertical: 10,
-    backgroundColor: "#300359",
+    backgroundColor: "#000",
     borderRadius: 60,
     alignItems: "center",
     justifyContent: "center",
@@ -24,5 +24,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 20,
     fontFamily: "PoetsenOne-Regular",
+    fontWeight: "600",
   },
 });

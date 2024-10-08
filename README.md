@@ -18,3 +18,15 @@ npx expo install expo-router react-native-safe-area-context react-native-screens
 ```sh
 npx expo install react-native-screens react-native-safe-area-context
 ```
+
+```sh
+npm i @react-native-async-storage/async-storage
+```
+
+```sh
+npx expo install expo-image-picker
+```
+
+```sh
+npx expo install @shopify/flash-list expo-dev-client
+```

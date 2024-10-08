@@ -14,12 +14,12 @@ import SecondaryButton from "../components/SecondaryButton";
 export default function SignIn({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
+      <Image
+        source={require("../assets/CrushEka-Main-Logo.png")}
+        style={styles.logo}
+      />
+      <Text style={styles.headingText}>Hey, Welcome to back..!</Text>
       <KeyboardAvoidingView behavior="padding" style={styles.keyboardContainer}>
-        <Image
-          source={require("../assets/CrushEka-Main-Logo.png")}
-          style={styles.logo}
-        />
-        <Text style={styles.headingText}>Hey, Welcome to back..!</Text>
         <View style={styles.inputWrapper}>
           <Text style={styles.bodyText}>Mobile Number</Text>
           <TextInput
@@ -34,21 +34,23 @@ export default function SignIn({ navigation }) {
             secureTextEntry={true}
           />
         </View>
-        <View style={styles.actionButtonWrapper}>
-          <PrimaryButton
-            title="Login"
-            onPress={() => {
-              console.log("Login");
-            }}
-          />
-          <SecondaryButton
-            title="Register"
-            onPress={() => {
-              console.log("Register");
-            }}
-          />
-        </View>
       </KeyboardAvoidingView>
+      <View style={styles.actionButtonWrapper}>
+        <PrimaryButton
+          title="Login"
+          onPress={() => {
+            console.log("Login");
+            navigation.replace("ChatList");
+          }}
+        />
+        <SecondaryButton
+          title="Register"
+          onPress={() => {
+            console.log("Register");
+            navigation.replace("SignUp");
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -61,7 +63,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   keyboardContainer: {
-    flex: 1,
+    flex: 0.45,
     width: "100%",
     backgroundColor: "#f0f0f0",
     alignItems: "center",
@@ -77,20 +79,22 @@ const styles = StyleSheet.create({
   headingText: {
     fontFamily: "PoetsenOne-Regular",
     fontSize: 24,
-    color: "#300359",
+    color: "#000",
+    fontWeight: "500",
   },
   bodyText: {
     fontSize: 16,
-    color: "#300359",
-    marginTop: 10,
+    color: "#000",
+    marginTop: 15,
   },
   actionButtonWrapper: {
-    flex: 0.5,
-    width: "90%",
+    flex: 0.4,
+    width: "80%",
     justifyContent: "center",
     alignItems: "center",
   },
   inputWrapper: {
+    flex: 0.4,
     width: "80%",
     justifyContent: "center",
     marginTop: 20,

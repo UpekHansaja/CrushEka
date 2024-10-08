@@ -33,3 +33,5 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+/Backend/CrushEka/nbproject/private/
+/Backend/CrushEka/build/
