@@ -86,7 +86,7 @@ public class SignUp extends HttpServlet {
                 //check uploaded image
                 if (avatarImage != null) {
                     String serverPath = req.getServletContext().getRealPath("");
-                    String avatarImagePath = serverPath + "\\" + "AvatarImages" + "\\" + mobile + ".png";
+                    String avatarImagePath = serverPath + "//" + "AvatarImages" + "//" + mobile + ".png";
                     System.out.println(avatarImagePath);
                     File file = new File(avatarImagePath);
                     Files.copy(avatarImage.getInputStream(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -94,6 +94,7 @@ public class SignUp extends HttpServlet {
 
                 responseJson.addProperty("success", true);
                 responseJson.addProperty("message", "Registration Complete");
+                responseJson.add("user", gson.toJsonTree(user));
             }
             session.close();
         }

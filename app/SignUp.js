@@ -1,5 +1,6 @@
 import { React, useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Pressable,
@@ -14,6 +15,7 @@ import SecondaryButton from "../components/SecondaryButton";
 import { useFonts } from "expo-font";
 import LoadFonts from "../components/LoadFonts";
 import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SignUp({ navigation }) {
   const [image, setImage] = useState(null);
@@ -21,8 +23,6 @@ export default function SignUp({ navigation }) {
   const [lastName, setLastName] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [password, setPassword] = useState("");
-
-  const [status, requestPermission] = ImagePicker.useMediaLibraryPermissions();
 
   const profileIcon = () => {
     if (image != null) {
@@ -130,9 +130,54 @@ export default function SignUp({ navigation }) {
       <View style={styles.actionButtonWrapper}>
         <PrimaryButton
           title="Register"
-          onPress={() => {
+          onPress={async () => {
             console.log("Register Pressed");
-            navigation.replace("ChatList");
+
+            try {
+              let formData = new FormData();
+              formData.append("mobile", mobileNumber);
+              formData.append("firstName", firstName);
+              formData.append("lastName", lastName);
+              formData.append("password", password);
+
+              if (image != null) {
+                formData.append("avatarImage", {
+                  uri: image,
+                  name: "avatar.jpg",
+                  type: "image/jpg",
+                });
+              }
+
+              const url = process.env.EXPO_PUBLIC_URL + "/SignUp";
+
+              const response = await fetch(url, {
+                method: "POST",
+                body: formData,
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
+              });
+
+              if (response.ok) {
+                const json = await response.json();
+                console.log(json);
+
+                if (json.success) {
+                  const jsonUserValue = JSON.stringify(json.user);
+                  await AsyncStorage.setItem("USER", jsonUserValue);
+
+                  await AsyncStorage.getItem("USER").then((value) => {
+                    console.log("Saved USER: " + value);
+                    navigation.replace("ChatList");
+                  });
+                } else {
+                  Alert.alert("Error", json.message);
+                }
+              }
+            } catch (error) {
+              console.error(error);
+            }
+            // navigation.replace("ChatList");
           }}
         />
         <SecondaryButton

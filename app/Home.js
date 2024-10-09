@@ -13,10 +13,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Home({ navigation }) {
   useEffect(() => {
+    // AsyncStorage.removeItem("USER");
+
     const fetchUser = async () => {
       console.log("Home Page");
       try {
-        const jsonValue = await AsyncStorage.getItem("user");
+        const jsonValue = await AsyncStorage.getItem("USER");
         if (jsonValue != null) {
           const USER = JSON.parse(jsonValue);
           console.log(USER);
