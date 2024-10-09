@@ -16,7 +16,7 @@ import org.hibernate.criterion.Restrictions;
 
 /**
  *
- * @author sandu
+ * @author upekhansaja
  */
 @WebServlet(name = "getLetters", urlPatterns = {"/getLetters"})
 public class getLetters extends HttpServlet {

@@ -16,6 +16,10 @@ import javax.servlet.http.HttpServletResponse;
 import model.HibernateUtil;
 import org.hibernate.Session;
 
+/**
+ *
+ * @author upekhansaja
+ */
 @WebServlet(name = "SendChat", urlPatterns = {"/SendChat"})
 public class SendChat extends HttpServlet {
 

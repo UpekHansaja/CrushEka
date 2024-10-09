@@ -24,6 +24,10 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 
+/**
+ *
+ * @author upekhansaja
+ */
 @MultipartConfig
 @WebServlet(name = "SignUp", urlPatterns = {"/SignUp"})
 public class SignUp extends HttpServlet {
@@ -52,8 +56,8 @@ public class SignUp extends HttpServlet {
         } else if (password.isEmpty()) {
             responseJson.addProperty("message", "Please Fill Your Password");
         } else if (!Validation.isPasswordValid(password)) {
-            responseJson.addProperty("message", "Password must include at least one"
-                    + " uppercase lette, number, special character");
+            responseJson.addProperty("message", "Password must include at least 8 characters including one"
+                    + " uppercase letter, number, special character");
         } else {
 
             Session session = HibernateUtil.getSessionFactory().openSession();
