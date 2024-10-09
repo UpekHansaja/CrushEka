@@ -33,7 +33,7 @@ public class LoadHomeData extends HttpServlet {
 
         Gson gson = new Gson();
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("status", false);
+        jsonObject.addProperty("success", false);
         jsonObject.addProperty("message", "Unable to process your request");
 
         try {
@@ -69,7 +69,7 @@ public class LoadHomeData extends HttpServlet {
                         )
                 ));
 
-                criteria2.addOrder(Order.desc("id"));
+                criteria2.addOrder(Order.desc("date_time"));
                 criteria2.setMaxResults(1);
                 List<Chat> chatList = criteria2.list();
 

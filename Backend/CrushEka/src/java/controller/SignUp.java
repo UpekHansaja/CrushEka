@@ -86,7 +86,7 @@ public class SignUp extends HttpServlet {
                 //check uploaded image
                 if (avatarImage != null) {
                     String serverPath = req.getServletContext().getRealPath("");
-                    String avatarImagePath = serverPath + "//" + "AvatarImages" + "//" + mobile + ".png";
+                    String avatarImagePath = serverPath + File.separator + "AvatarImages" + File.separator + mobile + ".jpg";
                     System.out.println(avatarImagePath);
                     File file = new File(avatarImagePath);
                     Files.copy(avatarImage.getInputStream(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);

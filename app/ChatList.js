@@ -15,30 +15,55 @@ import SecondaryButton from "../components/SecondaryButton";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 import { FlashList } from "@shopify/flash-list";
-import { router } from "expo-router";
+import { router, SplashScreen } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ChatList({ navigation }) {
   const [getChatArray, setChatArray] = useState([]);
-  const DATA = [
-    {
-      id: "1",
-      other_user_name: "First user",
-      other_user_status: "online",
-      avatar_image_found: true,
-      other_user_avatar: "https://reactnative.dev/img/tiny_logo.png",
-      message: "Hello machan moko wenne ithin?",
-      chat_status_id: "1",
-    },
-    {
-      id: "2",
-      other_user_name: "Second user",
-      other_user_status: "offline",
-      avatar_image_found: false,
-      other_user_avatar: "AB",
-      message: "Uberta wena wada nadda msg dada inne?",
-      chat_status_id: "2",
-    },
-  ];
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchChatList = async () => {
+    const userJson = await AsyncStorage.getItem("USER");
+    const user = JSON.parse(userJson);
+
+    if (user != null) {
+      console.log(user);
+
+      try {
+        const url = process.env.EXPO_PUBLIC_URL + "/LoadHomeData?id=" + user.id;
+
+        const response = await fetch(url);
+
+        if (response.ok) {
+          const json = await response.json();
+          console.log(json);
+
+          if (json.success) {
+            const chatArray = json.jsonChatArray;
+            setChatArray(chatArray);
+          } else {
+            console.log(json.message);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    } else {
+      console.log("No User Found");
+      navigation.replace("SignIn");
+    }
+  };
+
+  useEffect(() => {
+    fetchChatList();
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true); // Start refreshing
+    await fetchChatList(); // Fetch data
+    setRefreshing(false); // Stop refreshing
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior="padding" style={styles.keyboardContainer}>
@@ -64,7 +89,7 @@ export default function ChatList({ navigation }) {
         </View>
         <View style={styles.chatListView}>
           <FlashList
-            data={DATA}
+            data={getChatArray}
             renderItem={({ item }) => (
               <Pressable
                 style={styles.chatOuterPressable}
@@ -105,10 +130,11 @@ export default function ChatList({ navigation }) {
                 </View>
               </Pressable>
             )}
-            refreshing={true}
+            refreshing={refreshing}
             estimatedItemSize={400}
             onRefresh={() => {
               console.log("ChatList Refreshed");
+              handleRefresh();
             }}
           />
         </View>
