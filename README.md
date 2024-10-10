@@ -30,3 +30,7 @@ npx expo install expo-image-picker
 ```sh
 npx expo install @shopify/flash-list expo-dev-client
 ```
+
+```sh
+npm install luxon
+```

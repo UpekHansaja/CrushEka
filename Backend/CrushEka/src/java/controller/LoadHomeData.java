@@ -82,11 +82,13 @@ public class LoadHomeData extends HttpServlet {
 
                 //check avatar image
                 String serverPath = request.getServletContext().getRealPath("");
-                String otherUserAvatarImagePath = serverPath + "\\" + "AvatarImages" + "\\" + otherUser.getMobile() + ".png";
+                String otherUserAvatarImagePath = serverPath + File.separator + "AvatarImages" + File.separator + otherUser.getMobile() + ".jpg";
+                System.out.println("Other User Img Path: " + otherUserAvatarImagePath);
                 File otherUserAvatarImageFile = new File(otherUserAvatarImagePath);
 
                 if (otherUserAvatarImageFile.exists()) {
                     chatItem.addProperty("avatar_image_found", true);
+                    chatItem.addProperty("avatar_image_path", otherUserAvatarImagePath);
                 } else {
                     chatItem.addProperty("avatar_image_found", false);
                     chatItem.addProperty("other_user_avatar", otherUser.getFirst_name().charAt(0) + "" + otherUser.getLast_name().charAt(0));
@@ -94,7 +96,7 @@ public class LoadHomeData extends HttpServlet {
 
                 if (criteria2.list().isEmpty()) {
                     //no chat
-                    chatItem.addProperty("message", "Say Hi👋,");
+                    chatItem.addProperty("message", "Say Hi, to start conversation");
                     chatItem.addProperty("dateTime", dateFormat.format(user.getRegistered_date_time()));
                     chatItem.addProperty("chat_status_id", 1);
                 } else {

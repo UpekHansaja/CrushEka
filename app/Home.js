@@ -3,6 +3,7 @@ import {
   Image,
   KeyboardAvoidingView,
   SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -36,6 +37,7 @@ export default function Home({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar hidden={false} />
       <KeyboardAvoidingView behavior="padding" style={styles.keyboardContainer}>
         <Image
           source={require("../assets/CrushEka-Main-Logo.png")}

@@ -4,6 +4,7 @@ import {
   Image,
   KeyboardAvoidingView,
   SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -19,6 +20,7 @@ export default function SignIn({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar hidden={false} />
       <Image
         source={require("../assets/CrushEka-Main-Logo.png")}
         style={styles.logo}

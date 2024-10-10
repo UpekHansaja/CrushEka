@@ -5,6 +5,7 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -17,10 +18,14 @@ import Feather from "@expo/vector-icons/Feather";
 import { FlashList } from "@shopify/flash-list";
 import { router, SplashScreen } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DateTime } from "luxon";
 
 export default function ChatList({ navigation }) {
   const [getChatArray, setChatArray] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [defaulImgPath, setDefaultImgPath] = useState(
+    "https://img.icons8.com/pulsar-color/100/user.png"
+  );
 
   const fetchChatList = async () => {
     const userJson = await AsyncStorage.getItem("USER");
@@ -40,6 +45,8 @@ export default function ChatList({ navigation }) {
 
           if (json.success) {
             const chatArray = json.jsonChatArray;
+            // const descOrderChatArray = chatArray.reverse();
+            // setChatArray(descOrderChatArray);
             setChatArray(chatArray);
           } else {
             console.log(json.message);
@@ -64,8 +71,75 @@ export default function ChatList({ navigation }) {
     setRefreshing(false); // Stop refreshing
   };
 
+  // const formatTime = (dateString) => {
+  //   // Split date and time
+  //   const [year, month, day, time, period] = dateString
+  //     .replace(",", "")
+  //     .split(" ");
+
+  //   // Split time into hours and minutes
+  //   let [hours, minutes] = time.split(":").map(Number);
+
+  //   // Convert 12-hour format to 24-hour format if PM
+  //   if (period === "PM" && hours !== 12) {
+  //     hours += 12;
+  //   } else if (period === "AM" && hours === 12) {
+  //     hours = 0;
+  //   }
+
+  //   // Format the hours back to 12-hour format
+  //   const formattedHours = hours % 12 || 12;
+
+  //   // Ensure minutes are always two digits
+  //   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+  //   // Return the formatted time with AM/PM
+  //   return `${formattedHours}:${formattedMinutes} ${period}`;
+  // };
+
+  function formatTime(dateString) {
+    // Parse the date string with Luxon, specifying the format
+    const date = DateTime.fromFormat(dateString, "yyyy, LLL dd hh:mm a");
+
+    // Check if the date is valid
+    if (!date.isValid) {
+      console.error("Failed to parse date:", dateString);
+      return dateString; // Return the original string on error
+    }
+
+    const now = DateTime.now();
+    const differenceInDays = Math.floor(now.diff(date, "days").days);
+
+    // Today
+    if (differenceInDays === 0) {
+      return date.toFormat("hh:mm a");
+    }
+
+    // Yesterday
+    if (differenceInDays === 1) {
+      return "Yesterday";
+    }
+
+    // Less than a week ago
+    if (differenceInDays < 7) {
+      return date.toFormat("dd EEEE");
+    }
+
+    // Within the last year
+    if (now.year === date.year) {
+      return date.toFormat("LLL dd");
+    }
+
+    // More than 12 months ago
+    return date.toFormat("yyyy-LL-dd");
+  }
+
+  // Example usage
+  console.log(formatTime("2024, Oct 09 04:27 PM")); // Adjusted output based on the current date
+
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar hidden={false} />
       <KeyboardAvoidingView behavior="padding" style={styles.keyboardContainer}>
         <View style={styles.headlineWrapper}>
           <Text style={styles.headingText}>Chats</Text>
@@ -101,25 +175,46 @@ export default function ChatList({ navigation }) {
                 <View style={styles.chatInnerView}>
                   <View style={styles.chatImgUnreadWrapper}>
                     {/* <View style={styles.readMark}></View> */}
-                    <View style={styles.unreadMark}></View>
-                    {/* <View style={styles.chatUserImageOnline}> */}
-                    <View style={styles.chatUserImageOffline}>
-                      <Image
-                        style={styles.chatUserImage}
-                        source={{
-                          uri: "https://reactnative.dev/img/tiny_logo.png",
-                        }}
-                      />
+                    <View
+                      style={
+                        item.chat_status_id == 1
+                          ? styles.readMark
+                          : styles.unreadMark
+                      }
+                    ></View>
+                    <View
+                      style={
+                        item.other_user_status == 1
+                          ? styles.chatUserImageOnline
+                          : styles.chatUserImageOffline
+                      }
+                    >
+                      {item.avatar_image_found ? (
+                        <Image
+                          style={styles.chatUserImage}
+                          source={{
+                            uri: item.avatar_image_path,
+                          }}
+                        />
+                      ) : (
+                        <View style={styles.profileTextImg}>
+                          <Text style={styles.profileText}>
+                            {item.other_user_avatar}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   <View style={styles.chatTextWrapper}>
-                    <Text style={styles.chatUserName}>
+                    <Text style={styles.chatUserName} numberOfLines={1}>
                       {item.other_user_name}
                     </Text>
                     <Text style={styles.chatUserLastMsg} numberOfLines={1}>
                       {item.message}
                     </Text>
-                    <Text style={styles.chatLastMsgDate}>Friday</Text>
+                    <Text style={styles.chatLastMsgDate}>
+                      {formatTime(item.dateTime)}
+                    </Text>
                   </View>
                   <Feather
                     name="chevron-right"
@@ -238,8 +333,8 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 30,
-    borderColor: "green",
-    backgroundColor: "green",
+    borderColor: "#04a704",
+    backgroundColor: "#04a704",
     borderWidth: 5,
     borderBottomRightRadius: 8,
     alignItems: "center",
@@ -264,6 +359,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "500",
     fontFamily: "PoetsenOne-Regular",
+    paddingEnd: 60,
   },
   chatUserLastMsg: {
     fontSize: 16,
@@ -301,5 +397,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
     opacity: 0,
+  },
+  profileTextImg: {
+    fontSize: 40,
+    color: "#000",
+    fontWeight: "500",
+    borderRadius: 25,
+    borderColor: "#000",
+    borderWidth: 3,
+    width: 50,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFC107",
+  },
+  profileText: {
+    fontFamily: "TitanOne-Regular",
+    fontSize: 20,
+    color: "#000",
   },
 });

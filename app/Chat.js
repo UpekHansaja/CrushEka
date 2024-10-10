@@ -5,6 +5,7 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -78,6 +79,7 @@ export default function Chat({ route, navigation }) {
   ];
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar hidden={false} />
       <View style={styles.headlineWrapper}>
         <Pressable
           onPress={() => {
