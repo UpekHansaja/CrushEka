@@ -19,64 +19,157 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { FlashList } from "@shopify/flash-list";
 import { router, useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Chat({ route, navigation }) {
   const param = route.params;
-  // const chatUserData = JSON.stringify(param);
-  console.log(param);
+  console.log("Route Params:", param);
 
   const [getChatArray, setChatArray] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
+  const [msgValue, setMsgValue] = useState("");
 
-  const DATA = [
-    {
-      id: "1",
-      message: "Hello machan moko wenne ithin?",
-      datetime: "12:01 PM",
-      chat_status_id: "1",
-      side: "Right",
-      status: "Seen",
-    },
-    {
-      id: "2",
-      message: "Ane bn me paduwe idahnko wdak naththam",
-      datetime: "13:35 PM",
-      chat_status_id: "2",
-      side: "Left",
-      status: "Seen",
-    },
-    {
-      id: "1",
-      message: "Ow ow ubta kollek msg dammoth thama okkoma",
-      datetime: "12:01 PM",
-      chat_status_id: "1",
-      side: "Right",
-      status: "Seen",
-    },
-    {
-      id: "1",
-      message: "Aye warenko tho 😓",
-      datetime: "12:01 PM",
-      chat_status_id: "1",
-      side: "Right",
-      status: "Sent",
-    },
-    {
-      id: "2",
-      message: "Ane bn me paduwe idahnko wdak naththam",
-      datetime: "13:35 PM",
-      chat_status_id: "2",
-      side: "Left",
-      status: "Seen",
-    },
-    {
-      id: "1",
-      message: "Ow ow ubta kollek msg dammoth thama okkoma",
-      datetime: "12:01 PM",
-      chat_status_id: "1",
-      side: "Right",
-      status: "Sent",
-    },
-  ];
+  const fetchChat = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem("USER");
+      const user = JSON.parse(userJson);
+
+      if (user != null) {
+        const url =
+          process.env.EXPO_PUBLIC_URL +
+          "/LoadChat?logged_user_id=" +
+          user.id +
+          "&other_user_id=" +
+          param.other_user_id;
+
+        console.log("Fetching from URL:", url);
+
+        const response = await fetch(url);
+        const responseText = await response.text();
+        console.log("Raw API Response:", responseText);
+
+        if (response.ok) {
+          const json = JSON.parse(responseText);
+          console.log("Parsed JSON:", json);
+
+          const chatArray = json || [];
+          console.log("Chat Array:", chatArray);
+
+          if (chatArray.length === 0) {
+            console.log("No messages found in the chat");
+            setError(
+              "\n\n\n\n No messages yet..! \n\n Say Hi👋, to start a conversation!"
+            );
+          } else {
+            setChatArray(chatArray);
+            setError(null);
+          }
+
+          // setChatArray(JSON.stringify(json));
+        } else {
+          console.log("API Error:", response.status, responseText);
+          setError(`Failed to load chat. Status: ${response.status}`);
+        }
+      } else {
+        console.log("No User Found");
+        navigation.replace("Home");
+      }
+    } catch (error) {
+      console.error("Fetch Error:", error);
+      setError("An error occurred while loading the chat.");
+    }
+  };
+
+  useEffect(() => {
+    fetchChat();
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchChat();
+    setRefreshing(false);
+  };
+
+  const renderChatItem = ({ item }) => (
+    <View
+      style={
+        item.side === "Right" ? styles.chatBubbleRight : styles.chatBubbleLeft
+      }
+    >
+      <Text
+        style={
+          item.side === "Right"
+            ? styles.chatBubbleTextRight
+            : styles.chatBubbleTextLeft
+        }
+      >
+        {item.message}
+      </Text>
+      <Text
+        style={
+          item.side === "Right"
+            ? styles.chatBubbleTimeTextRight
+            : styles.chatBubbleTimeTextLeft
+        }
+      >
+        {item.datetime}
+        &nbsp;&nbsp;
+        {item.status == "1" ? (
+          <AntDesign name="checkcircle" size={14} color="black" />
+        ) : (
+          <AntDesign name="checkcircleo" size={14} color="black" />
+        )}
+      </Text>
+    </View>
+  );
+
+  const sendMessage = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem("USER");
+      const user = JSON.parse(userJson);
+
+      console.log("Send From User:", user);
+      if (user != null) {
+        const url =
+          process.env.EXPO_PUBLIC_URL +
+          "/SendChat?logged_user_id=" +
+          user.id +
+          "&other_user_id=" +
+          param.other_user_id +
+          "&message=" +
+          message;
+
+        const response = await fetch(url);
+
+        if (response.ok) {
+          const json = await response.json();
+          console.log(json);
+
+          if (json.success) {
+            console.log("Message Sent Successfully");
+            setMessage("");
+            await fetchChat();
+            setMsgValue("");
+          } else {
+            console.log("Failed to send the message");
+            setError(json.message);
+          }
+        } else {
+          console.log("API Error:", response.status, response);
+          setError(`Failed to send the message. Status: ${response.status}`);
+        }
+      } else {
+        console.log("No User Found");
+        navigation.replace("Home");
+      }
+    } catch (error) {
+      console.error("Send Error:", error);
+      setError("An error occurred while sending the message.");
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar hidden={false} />
@@ -96,15 +189,21 @@ export default function Chat({ route, navigation }) {
           style={styles.userDetailButton}
         >
           <View style={styles.headerUserWrapper}>
-            <Image
-              style={styles.chatUserImage}
-              source={{
-                uri: "https://reactnative.dev/img/tiny_logo.png",
-              }}
-            />
+            {param.avatar_image_found ? (
+              <Image
+                style={styles.chatUserImage}
+                source={{ uri: param.avatar_image_path }}
+              />
+            ) : (
+              <View style={styles.profileTextImg}>
+                <Text style={styles.profileText}>
+                  {param.other_user_avatar}
+                </Text>
+              </View>
+            )}
             <View style={styles.chatUserDetails}>
               <Text style={styles.chatUserName}>{param.other_user_name}</Text>
-              {param.other_user_status === "Online" ? (
+              {param.other_user_status === 1 ? (
                 <Text style={styles.onlineText}>
                   <FontAwesome name="circle" size={12} color="green" /> Online
                 </Text>
@@ -119,66 +218,39 @@ export default function Chat({ route, navigation }) {
       </View>
 
       <View style={styles.chatListView}>
-        <FlashList
-          data={DATA}
-          renderItem={({ item }) => (
-            <View
-              style={
-                item.side == "Right"
-                  ? styles.chatBubbleRight
-                  : styles.chatBubbleLeft
-              }
-            >
-              <View>
-                <Text
-                  style={
-                    item.side == "Right"
-                      ? styles.chatBubbleTextRight
-                      : styles.chatBubbleTextLeft
-                  }
-                >
-                  {item.message}
-                </Text>
-              </View>
-              <View>
-                <Text
-                  style={
-                    item.side == "Right"
-                      ? styles.chatBubbleTimeTextRight
-                      : styles.chatBubbleTimeTextLeft
-                  }
-                >
-                  {item.datetime}
-                  &nbsp;&nbsp;
-                  {item.status == "Seen" ? (
-                    <AntDesign name="checkcircle" size={14} color="black" />
-                  ) : (
-                    <AntDesign name="checkcircleo" size={14} color="black" />
-                  )}
-                </Text>
-              </View>
-            </View>
-          )}
-          refreshing={true}
-          estimatedItemSize={600}
-          onRefresh={() => {
-            console.log("Refreshed");
-          }}
-        />
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <FlashList
+            data={getChatArray}
+            renderItem={renderChatItem}
+            keyExtractor={(item, index) => index.toString()}
+            refreshing={refreshing}
+            estimatedItemSize={600}
+            onRefresh={handleRefresh}
+            ListEmptyComponent={
+              <Text style={styles.emptyListText}>No messages yet.</Text>
+            }
+          />
+        )}
       </View>
       <KeyboardAvoidingView behavior="padding" style={styles.keyboardContainer}>
         <TextInput
           style={styles.input}
           placeholder="Enter your message here"
           numberOfLines={2}
+          value={msgValue}
           onChangeText={(text) => {
             console.log(text);
+            setMessage(text);
+            setMsgValue(text);
           }}
         />
         <Pressable
           style={styles.settingsButton}
           onPress={() => {
             console.log("Send Pressed");
+            sendMessage();
           }}
         >
           <FontAwesome name="send" size={18} color="#FFC107" />
@@ -412,5 +484,35 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     textAlign: "right",
+  },
+  profileTextImg: {
+    fontSize: 40,
+    color: "#000",
+    fontWeight: "500",
+    borderRadius: 25,
+    borderColor: "#000",
+    borderWidth: 3,
+    width: 50,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFC107",
+  },
+  profileText: {
+    fontFamily: "TitanOne-Regular",
+    fontSize: 20,
+    color: "#000",
+  },
+  errorText: {
+    color: "#4b4b4b",
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+  },
+  emptyListText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#666",
   },
 });
