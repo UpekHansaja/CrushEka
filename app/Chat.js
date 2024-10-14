@@ -1,5 +1,6 @@
-import { React, useEffect, useState } from "react";
+import { React, useEffect, useRef, useState } from "react";
 import {
+  AppState,
   Image,
   KeyboardAvoidingView,
   Pressable,
@@ -30,6 +31,9 @@ export default function Chat({ route, navigation }) {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState("");
   const [msgValue, setMsgValue] = useState("");
+
+  const appState = useRef(AppState.currentState);
+  const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
   const fetchChat = async () => {
     try {
@@ -82,8 +86,61 @@ export default function Chat({ route, navigation }) {
     }
   };
 
+  const setUserOfflineStatus = async () => {
+    const userJson = await AsyncStorage.getItem("USER");
+    const user = JSON.parse(userJson);
+
+    if (user != null) {
+      try {
+        const url =
+          process.env.EXPO_PUBLIC_URL + "/SetUserOffline?id=" + user.id;
+        const response = await fetch(url);
+
+        if (response.ok) {
+          const json = await response.json();
+          console.log("User Offline Status Set");
+
+          if (json.success) {
+            console.log(json.message);
+          } else {
+            console.log(json.message);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  const _handleAppStateChange = (nextAppState) => {
+    if (
+      appState.current.match(/inactive|background/) &&
+      nextAppState === "active"
+    ) {
+      console.log("App has come to the foreground!");
+      fetchChat();
+    }
+
+    if (nextAppState === "background") {
+      setUserOfflineStatus();
+    }
+
+    appState.current = nextAppState;
+    setAppStateVisible(appState.current);
+    console.log("AppState", appState.current);
+  };
+
   useEffect(() => {
+    const appStateHandel = AppState.addEventListener(
+      "change",
+      _handleAppStateChange
+    );
+
     fetchChat();
+
+    return () => {
+      appStateHandel.remove();
+    };
   }, []);
 
   const handleRefresh = async () => {

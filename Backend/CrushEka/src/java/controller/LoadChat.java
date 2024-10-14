@@ -65,6 +65,7 @@ public class LoadChat extends HttpServlet {
 
             //get chat status = 1 (seen)
             Chat_Status chat_Status = (Chat_Status) session.get(Chat_Status.class, 1);
+//            Chat_Status unSeenChat_Status = (Chat_Status) session.get(Chat_Status.class, 2);
 
             //create date time
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, hh:mm a");
@@ -82,7 +83,9 @@ public class LoadChat extends HttpServlet {
                     chatObject.addProperty("side", "Left");
 
                     //get only unseen chats (chat status id=2) 
-                    if (chat.getChat_status_id().getId() == 2) {
+                    Integer sentID = 2;
+
+                    if (sentID.equals(chat.getChat_status_id().getId())) {
                         //update chat status -> seen
                         chat.setChat_status_id(chat_Status);
                         session.save(chat);

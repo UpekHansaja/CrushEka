@@ -78,12 +78,12 @@ public class LoadHomeData extends HttpServlet {
                 chatItem.addProperty("other_user_name", otherUser.getFirst_name() + " " + otherUser.getLast_name());
                 chatItem.addProperty("other_user_status", otherUser.getUser_status_id().getId());
 
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy, MMM dd hh:ss a");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy, MMM dd hh:mm a");
 
                 //check avatar image
                 String serverPath = request.getServletContext().getRealPath("");
                 String otherUserAvatarImagePath = serverPath + File.separator + "AvatarImages" + File.separator + otherUser.getMobile() + ".jpg";
-                System.out.println("Other User Img Path: " + otherUserAvatarImagePath);
+//                System.out.println("Other User Img Path: " + otherUserAvatarImagePath);
                 File otherUserAvatarImageFile = new File(otherUserAvatarImagePath);
 
                 if (otherUserAvatarImageFile.exists()) {
@@ -103,6 +103,13 @@ public class LoadHomeData extends HttpServlet {
                     //found last chat
                     chatItem.addProperty("message", chatList.get(0).getMessage());
                     chatItem.addProperty("dateTime", dateFormat.format(chatList.get(0).getDate_time()));
+
+                    if (chatList.get(0).getFrom_user().getId() == Integer.parseInt(userId)) {
+                        System.out.println("Logged User is the From User");
+                        chatItem.addProperty("from_logged_user", true);
+                    } else {
+                        chatItem.addProperty("from_logged_user", false);
+                    }
                     chatItem.addProperty("chat_status_id", chatList.get(0).getChat_status_id().getId());
                 }
 

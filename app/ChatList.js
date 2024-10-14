@@ -1,5 +1,6 @@
-import { React, useEffect, useState } from "react";
+import { React, useEffect, useState, useRef } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Pressable,
@@ -10,6 +11,7 @@ import {
   Text,
   TextInput,
   View,
+  AppState,
 } from "react-native";
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
@@ -19,34 +21,34 @@ import { FlashList } from "@shopify/flash-list";
 import { router, SplashScreen } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DateTime } from "luxon";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 export default function ChatList({ navigation }) {
   const [getChatArray, setChatArray] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [defaulImgPath, setDefaultImgPath] = useState(
-    "https://img.icons8.com/pulsar-color/100/user.png"
-  );
+  const [savedUser, setSavedUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const appState = useRef(AppState.currentState);
+  const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
   const fetchChatList = async () => {
     const userJson = await AsyncStorage.getItem("USER");
     const user = JSON.parse(userJson);
 
     if (user != null) {
-      console.log(user);
+      setSavedUser(user);
 
       try {
         const url = process.env.EXPO_PUBLIC_URL + "/LoadHomeData?id=" + user.id;
-
         const response = await fetch(url);
 
         if (response.ok) {
           const json = await response.json();
-          console.log(json);
+          console.log("ChatList Fetched");
 
           if (json.success) {
             const chatArray = json.jsonChatArray;
-            // const descOrderChatArray = chatArray.reverse();
-            // setChatArray(descOrderChatArray);
             setChatArray(chatArray);
           } else {
             console.log(json.message);
@@ -56,86 +58,100 @@ export default function ChatList({ navigation }) {
         console.error(error);
       }
     } else {
-      console.log("No User Found");
       navigation.replace("SignIn");
     }
   };
 
+  const setUserOfflineStatus = async () => {
+    const userJson = await AsyncStorage.getItem("USER");
+    const user = JSON.parse(userJson);
+
+    if (user != null) {
+      try {
+        const url =
+          process.env.EXPO_PUBLIC_URL + "/SetUserOffline?id=" + user.id;
+        const response = await fetch(url);
+
+        if (response.ok) {
+          const json = await response.json();
+          console.log("User Offline Status Set");
+
+          if (json.success) {
+            console.log(json.message);
+          } else {
+            console.log(json.message);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  const _handleAppStateChange = (nextAppState) => {
+    if (
+      appState.current.match(/inactive|background/) &&
+      nextAppState === "active"
+    ) {
+      console.log("App has come to the foreground!");
+      fetchChatList();
+    }
+
+    if (nextAppState === "background") {
+      setUserOfflineStatus();
+    }
+
+    appState.current = nextAppState;
+    setAppStateVisible(appState.current);
+    console.log("AppState", appState.current);
+  };
+
   useEffect(() => {
+    const appStateHandel = AppState.addEventListener(
+      "change",
+      _handleAppStateChange
+    );
     fetchChatList();
+
+    return () => {
+      appStateHandel.remove();
+    };
   }, []);
 
   const handleRefresh = async () => {
-    setRefreshing(true); // Start refreshing
-    await fetchChatList(); // Fetch data
-    setRefreshing(false); // Stop refreshing
+    setRefreshing(true);
+    await fetchChatList();
+    setRefreshing(false);
   };
 
-  // const formatTime = (dateString) => {
-  //   // Split date and time
-  //   const [year, month, day, time, period] = dateString
-  //     .replace(",", "")
-  //     .split(" ");
-
-  //   // Split time into hours and minutes
-  //   let [hours, minutes] = time.split(":").map(Number);
-
-  //   // Convert 12-hour format to 24-hour format if PM
-  //   if (period === "PM" && hours !== 12) {
-  //     hours += 12;
-  //   } else if (period === "AM" && hours === 12) {
-  //     hours = 0;
-  //   }
-
-  //   // Format the hours back to 12-hour format
-  //   const formattedHours = hours % 12 || 12;
-
-  //   // Ensure minutes are always two digits
-  //   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-
-  //   // Return the formatted time with AM/PM
-  //   return `${formattedHours}:${formattedMinutes} ${period}`;
-  // };
+  const filteredChats = getChatArray.filter((chat) =>
+    chat.other_user_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   function formatTime(dateString) {
-    // Parse the date string with Luxon, specifying the format
     const date = DateTime.fromFormat(dateString, "yyyy, LLL dd hh:mm a");
-
-    // Check if the date is valid
     if (!date.isValid) {
       console.error("Failed to parse date:", dateString);
-      return dateString; // Return the original string on error
+      return dateString;
     }
 
     const now = DateTime.now();
     const differenceInDays = Math.floor(now.diff(date, "days").days);
 
-    // Today
     if (differenceInDays === 0) {
       return date.toFormat("hh:mm a");
     }
-
-    // Yesterday
     if (differenceInDays === 1) {
       return "Yesterday";
     }
-
-    // Less than a week ago
     if (differenceInDays < 7) {
-      return date.toFormat("dd EEEE");
+      return date.toFormat("ccc");
     }
-
-    // Within the last year
     if (now.year === date.year) {
       return date.toFormat("LLL dd");
     }
-
-    // More than 12 months ago
-    return date.toFormat("yyyy-LL-dd");
+    return date.toFormat("yyyy LLL dd");
   }
-
-  // Example usage
-  console.log(formatTime("2024, Oct 09 04:27 PM")); // Adjusted output based on the current date
 
   return (
     <SafeAreaView style={styles.container}>
@@ -146,42 +162,57 @@ export default function ChatList({ navigation }) {
           <Pressable
             style={styles.settingsButton}
             onPress={() => {
-              console.log("Settings Pressed");
+              Alert.prompt(
+                "Log-Out",
+                "Are you sure you want to logout?",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                  {
+                    text: "LogOut",
+                    onPress: async () => {
+                      await AsyncStorage.removeItem("USER");
+                      navigation.replace("Home");
+                    },
+                  },
+                ],
+                "default"
+              );
             }}
           >
-            <Ionicons name="settings-sharp" size={24} color="#FFC107" />
+            <FontAwesome name="power-off" size={24} color="#FFC107" />
           </Pressable>
         </View>
         <View style={styles.searchWrapper}>
           <TextInput
             style={styles.input}
             placeholder="Search"
-            onChangeText={(text) => {
-              console.log(text);
-            }}
+            onChangeText={(text) => setSearchQuery(text)} // Update search query state
           />
         </View>
         <View style={styles.chatListView}>
           <FlashList
-            data={getChatArray}
+            data={filteredChats} // Use the filtered chat array
             renderItem={({ item }) => (
               <Pressable
                 style={styles.chatOuterPressable}
-                onPress={() => {
-                  console.log("Single Chat Pressed");
-                  navigation.navigate("Chat", item);
-                }}
+                onPress={() => navigation.navigate("Chat", item)}
               >
                 <View style={styles.chatInnerView}>
                   <View style={styles.chatImgUnreadWrapper}>
-                    {/* <View style={styles.readMark}></View> */}
-                    <View
-                      style={
-                        item.chat_status_id == 1
-                          ? styles.readMark
-                          : styles.unreadMark
-                      }
-                    ></View>
+                    {item.from_logged_user ? (
+                      <View style={styles.readMark}></View>
+                    ) : (
+                      <View
+                        style={
+                          item.chat_status_id == 1
+                            ? styles.readMark
+                            : styles.unreadMark
+                        }
+                      ></View>
+                    )}
                     <View
                       style={
                         item.other_user_status == 1
@@ -192,9 +223,7 @@ export default function ChatList({ navigation }) {
                       {item.avatar_image_found ? (
                         <Image
                           style={styles.chatUserImage}
-                          source={{
-                            uri: item.avatar_image_path,
-                          }}
+                          source={{ uri: item.avatar_image_path }}
                         />
                       ) : (
                         <View style={styles.profileTextImg}>
@@ -227,10 +256,7 @@ export default function ChatList({ navigation }) {
             )}
             refreshing={refreshing}
             estimatedItemSize={400}
-            onRefresh={() => {
-              console.log("ChatList Refreshed");
-              handleRefresh();
-            }}
+            onRefresh={handleRefresh}
           />
         </View>
       </KeyboardAvoidingView>
