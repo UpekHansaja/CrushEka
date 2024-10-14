@@ -45,7 +45,7 @@ export default function ChatList({ navigation }) {
 
         if (response.ok) {
           const json = await response.json();
-          console.log("ChatList Fetched");
+          // console.log("ChatList Fetched");
 
           if (json.success) {
             const chatArray = json.jsonChatArray;
@@ -111,12 +111,21 @@ export default function ChatList({ navigation }) {
       "change",
       _handleAppStateChange
     );
-    fetchChatList();
+    pollingChatList();
 
     return () => {
       appStateHandel.remove();
     };
   }, []);
+
+  const pollingChatList = async () => {
+    const interval = setInterval(async () => {
+      // console.log("Polling Chat List");
+      await fetchChatList();
+    });
+
+    return () => clearInterval(interval);
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -173,6 +182,7 @@ export default function ChatList({ navigation }) {
                   {
                     text: "LogOut",
                     onPress: async () => {
+                      await setUserOfflineStatus();
                       await AsyncStorage.removeItem("USER");
                       navigation.replace("Home");
                     },

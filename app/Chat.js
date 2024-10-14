@@ -24,7 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Chat({ route, navigation }) {
   const param = route.params;
-  console.log("Route Params:", param);
+  // console.log("Route Params:", param);
 
   const [getChatArray, setChatArray] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,18 +48,18 @@ export default function Chat({ route, navigation }) {
           "&other_user_id=" +
           param.other_user_id;
 
-        console.log("Fetching from URL:", url);
+        // console.log("Fetching from URL:", url);
 
         const response = await fetch(url);
         const responseText = await response.text();
-        console.log("Raw API Response:", responseText);
+        // console.log("Raw API Response:", responseText);
 
         if (response.ok) {
           const json = JSON.parse(responseText);
-          console.log("Parsed JSON:", json);
+          // console.log("Parsed JSON:", json);
 
           const chatArray = json || [];
-          console.log("Chat Array:", chatArray);
+          // console.log("Chat Array:", chatArray);
 
           if (chatArray.length === 0) {
             console.log("No messages found in the chat");
@@ -136,12 +136,21 @@ export default function Chat({ route, navigation }) {
       _handleAppStateChange
     );
 
-    fetchChat();
+    pollingChat();
 
     return () => {
       appStateHandel.remove();
     };
   }, []);
+
+  const pollingChat = async () => {
+    const interval = setInterval(async () => {
+      // console.log("Polling Chat List");
+      await fetchChat();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
