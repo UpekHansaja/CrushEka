@@ -118,8 +118,10 @@ export default function ChatList({ navigation }) {
     };
   }, []);
 
+  var interval;
+
   const pollingChatList = async () => {
-    const interval = setInterval(async () => {
+    interval = setInterval(async () => {
       // console.log("Polling Chat List");
       await fetchChatList();
     });
@@ -184,6 +186,7 @@ export default function ChatList({ navigation }) {
                     onPress: async () => {
                       await setUserOfflineStatus();
                       await AsyncStorage.removeItem("USER");
+                      clearInterval(interval);
                       navigation.replace("Home");
                     },
                   },

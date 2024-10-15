@@ -136,6 +136,7 @@ export default function Chat({ route, navigation }) {
       _handleAppStateChange
     );
 
+    fetchChat();
     pollingChat();
 
     return () => {
